@@ -928,6 +928,8 @@ Status
 	PCS42L42_CONTEXT pDevice = GetDeviceContext(FxDevice);
 	NTSTATUS status = STATUS_SUCCESS;
 
+	pDevice->JackType = 0;
+
 	int devid = cirrus_read_device_id(pDevice, CS42L42_DEVID_AB);
 	if (devid < 0) {
 		Cs42l42Print(DEBUG_LEVEL_ERROR, DBG_PNP,
@@ -1544,28 +1546,24 @@ void cs42l42_jack_det(PCS42L42_CONTEXT pDevice) {
 		if (stickies[5] & CS42L42_HSDET_AUTO_DONE_MASK) {
 			cs42l42_process_hs_type_detect(pDevice);
 
-			CsAudioSpecialKeyReport report;
-			report.ReportID = REPORTID_SPECKEYS;
-			report.ControlCode = CONTROL_CODE_JACK_TYPE;
-
 			switch (pDevice->hs_type) {
 			case CS42L42_PLUG_CTIA:
 			case CS42L42_PLUG_OMTP:
-				report.ControlValue = SND_JACK_HEADSET;
-
+				pDevice->JackType = SND_JACK_HEADSET;
 				break;
 			case CS42L42_PLUG_HEADPHONE:
-				report.ControlValue = SND_JACK_HEADPHONE;
-
-				size_t bytesWritten;
-				Cs42l42ProcessVendorReport(pDevice, &report, sizeof(report), &bytesWritten);
-
+				pDevice->JackType = SND_JACK_HEADPHONE;
 				break;
 			default:
-				report.ControlValue = SND_JACK_HEADPHONE;
+				pDevice->JackType = SND_JACK_HEADPHONE;
 				break;
 			}
 
+			CsAudioSpecialKeyReport report;
+			report.ReportID = REPORTID_SPECKEYS;
+			report.ControlCode = CONTROL_CODE_JACK_TYPE;
+			report.ControlValue = pDevice->JackType;
+			
 			size_t bytesWritten;
 			Cs42l42ProcessVendorReport(pDevice, &report, sizeof(report), &bytesWritten);
 		}
@@ -1586,10 +1584,12 @@ void cs42l42_jack_det(PCS42L42_CONTEXT pDevice) {
 				pDevice->plug_state = CS42L42_TS_UNPLUG;
 				cs42l42_cancel_hs_type_detect(pDevice);
 
+				pDevice->JackType = 0;
+
 				CsAudioSpecialKeyReport report;
 				report.ReportID = REPORTID_SPECKEYS;
 				report.ControlCode = CONTROL_CODE_JACK_TYPE;
-				report.ControlValue = 0;
+				report.ControlValue = pDevice->JackType;
 
 				size_t bytesWritten;
 				Cs42l42ProcessVendorReport(pDevice, &report, sizeof(report), &bytesWritten);
@@ -2257,6 +2257,17 @@ Cs42l42WriteReport(
 
 			switch (transferPacket->reportId)
 			{
+			case REPORTID_SPECKEYS:
+				status = STATUS_SUCCESS;
+
+				CsAudioSpecialKeyReport report;
+				report.ReportID = REPORTID_SPECKEYS;
+				report.ControlCode = CONTROL_CODE_JACK_TYPE;
+				report.ControlValue = DevContext->JackType;
+
+				size_t bytesWritten;
+				Cs42l42ProcessVendorReport(DevContext, &report, sizeof(report), &bytesWritten);
+				break;
 			default:
 
 				Cs42l42Print(DEBUG_LEVEL_ERROR, DBG_IOCTL,

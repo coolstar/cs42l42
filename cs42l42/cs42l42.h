@@ -130,6 +130,8 @@ typedef struct _CS42L42_CONTEXT
 
 	WDFINTERRUPT Interrupt;
 
+	INT JackType;
+
 	//device data
 	UINT8 ts_inv;
 	UINT8 ts_dbnc_rise;
