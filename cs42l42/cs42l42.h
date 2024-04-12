@@ -122,6 +122,8 @@ typedef struct _CS42L42_CONTEXT
 
 	WDFQUEUE ReportQueue;
 
+	WDFQUEUE IdleQueue;
+
 	SPB_CONTEXT I2CContext;
 
 	WDFWAITLOCK RegisterLock;
@@ -155,6 +157,20 @@ typedef struct _CS42L42_CONTEXT
 } CS42L42_CONTEXT, *PCS42L42_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CS42L42_CONTEXT, GetDeviceContext)
+
+//
+// Power Idle Workitem context
+// 
+typedef struct _IDLE_WORKITEM_CONTEXT
+{
+	// Handle to a WDF device object
+	WDFDEVICE FxDevice;
+
+	// Handle to a WDF request object
+	WDFREQUEST FxRequest;
+
+} IDLE_WORKITEM_CONTEXT, * PIDLE_WORKITEM_CONTEXT;
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(IDLE_WORKITEM_CONTEXT, GetIdleWorkItemContext)
 
 //
 // Function definitions
@@ -230,6 +246,11 @@ Cs42l42GetFeature(
 PCHAR
 DbgHidInternalIoctlString(
 	IN ULONG        IoControlCode
+);
+
+VOID
+Cs42l42CompleteIdleIrp(
+	IN PCS42L42_CONTEXT FxDeviceContext
 );
 
 //

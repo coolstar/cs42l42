@@ -47,7 +47,9 @@ cs42l42.sys  = 1,,
 CopyFiles=Drivers_Dir
 
 [Cs42l42_Device.NT.HW]
-AddReg=Cs42l42_AddReg
+AddReg=Cs42l42_AddReg, Cs42l42_AddReg.Configuration.AddReg
+Include=pci.inf
+Needs=PciD3ColdSupported.HW
 
 [Drivers_Dir]
 cs42l42.sys
@@ -56,6 +58,9 @@ cs42l42.sys
 ; Set to 1 to connect the first interrupt resource found, 0 to leave disconnected
 HKR,Settings,"ConnectInterrupt",0x00010001,0
 HKR,,"UpperFilters",0x00010000,"mshidkmdf"
+
+[Cs42l42_AddReg.Configuration.AddReg]
+HKR,,"EnhancedPowerManagementEnabled",0x00010001,1
 
 ;-------------- Service installation
 [Cs42l42_Device.NT.Services]
